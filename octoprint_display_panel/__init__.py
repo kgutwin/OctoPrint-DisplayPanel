@@ -13,12 +13,26 @@ from octoprint.events import eventManager, Events
 from octoprint.util import RepeatedTimer, ResettableTimer
 import time
 from enum import Enum
-from board import SCL, SDA
-import busio
+
 from PIL import Image, ImageDraw, ImageFont
 import inspect
-import adafruit_ssd1306
-import RPi.GPIO as GPIO
+import traceback
+
+# Avoid import issues when not on Raspberry Pi (for development purposes)
+try:
+	from board import SCL, SDA
+except NotImplementedError:
+	SCL = SDA = None
+
+try:
+	import RPi.GPIO as GPIO
+	import adafruit_ssd1306
+	import busio
+except ImportError:
+	from unittest.mock import Mock
+	GPIO = Mock()
+	busio = Mock()
+	from . import console_display as adafruit_ssd1306
 
 class ScreenModes(Enum):
 	PRINT = 1
@@ -31,6 +45,7 @@ class ScreenModes(Enum):
 		if index >= len(members):
 			index = 0
 		return members[index]
+
 
 class Display_panelPlugin(octoprint.plugin.StartupPlugin,
                           octoprint.plugin.ShutdownPlugin,
@@ -924,9 +939,10 @@ class Display_panelPlugin(octoprint.plugin.StartupPlugin,
 		Helper function for more complete logging on exceptions
 		"""
 
-		template = "An exception of type {0} occurred on {1}. Arguments: {2!r}"
-		message = template.format(type(ex).__name__, inspect.currentframe().f_code.co_name, ex.args)
-		self._logger.warn(message)
+		#template = "An exception of type {0} occurred on {1}. Arguments: {2!r}"
+		#message = template.format(type(ex).__name__, inspect.currentframe().f_code.co_name, ex.args)
+		#self._logger.warn(message)
+		self._logger.warn(traceback.format_exc())
 
 __plugin_name__ = "OctoPrint Micro Panel"
 __plugin_pythoncompat__ = ">=3,<4" # only python 3
