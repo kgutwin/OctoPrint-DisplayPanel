@@ -38,6 +38,7 @@ class ScreenModes(Enum):
 	PRINT = 1
 	PRINTER = 2
 	SYSTEM = 3
+	SOFTBUTTONS = 4
 
 	def next(self):
 		members = list(self.__class__)
@@ -89,6 +90,7 @@ class Display_panelPlugin(octoprint.plugin.StartupPlugin,
 	_printer_state = 0	# 0 - disconnected, 1 - connected but idle, 2 - printing
 	_progress_on_top = False
 	_screen_mode = ScreenModes.SYSTEM
+	_soft_buttons = []
 	_system_stats = {}
 	_timebased_progress = False
 
@@ -222,6 +224,7 @@ class Display_panelPlugin(octoprint.plugin.StartupPlugin,
 		self._pin_play = int(self._settings.get(["pin_play"]))
 		self._progress_on_top = bool(self._settings.get(["progress_on_top"]))
 		self._screen_mode = ScreenModes.SYSTEM
+		self._soft_buttons = self._settings.get(["soft_buttons"])
 		self._last_debounce = self._debounce
 		self._last_display_timeout_option = self._display_timeout_option
 		self._last_display_timeout_time = self._display_timeout_time
@@ -251,6 +254,7 @@ class Display_panelPlugin(octoprint.plugin.StartupPlugin,
 			pin_play		= -1,			# Default is disabled
 			progress_on_top	= False,		# Default is disabled
 			timebased_progress	= False,	# Default is disabled
+			soft_buttons	= [],			# Default is no soft buttons set
 		)
 
 	def on_settings_save(self, data):
@@ -269,6 +273,7 @@ class Display_panelPlugin(octoprint.plugin.StartupPlugin,
 		self._pin_mode = int(self._settings.get(["pin_mode"]))
 		self._pin_pause = int(self._settings.get(["pin_pause"]))
 		self._pin_play = int(self._settings.get(["pin_play"]))
+		self._soft_buttons = self._settings.get(["soft_buttons"])
 		pins_updated = 0
 		try:
 			if self._i2c_address.lower() != self._last_i2c_address.lower() or \
@@ -553,6 +558,9 @@ class Display_panelPlugin(octoprint.plugin.StartupPlugin,
 		"""
 
 		self._screen_mode = self._screen_mode.next()
+		if self._screen_mode == ScreenModes.SOFTBUTTONS and not self._soft_buttons:
+			self._screen_mode = self._screen_mode.next()
+		
 		self.update_ui()
 
 	def try_cancel(self):
@@ -705,6 +713,8 @@ class Display_panelPlugin(octoprint.plugin.StartupPlugin,
 					self.update_ui_printer()
 				elif self._screen_mode == ScreenModes.PRINT:
 					self.update_ui_print(current_data)
+				elif self._screen_mode == ScreenModes.SOFTBUTTONS:
+					self.update_ui_soft_buttons()
 
 				self.update_ui_bottom(current_data)
 
@@ -848,6 +858,21 @@ class Display_panelPlugin(octoprint.plugin.StartupPlugin,
 			except Exception as ex:
 				self.log_error(ex)
 
+	def update_ui_soft_buttons(self):
+		if not self._display_init:
+			return
+
+		top = (self._colored_strip_height) * int(self._progress_on_top)
+		bottom = self.height - (self._colored_strip_height * int(not self._progress_on_top))
+		left = 0
+		offset = self._area_offset * int(self._progress_on_top)
+		
+		try:
+			self.draw.rectangle((0, top, self.width, bottom), fill=0)
+			self.draw.text((left, top + offset + 9), "Soft Buttons", font=self.font, fill=255)
+		except Exception as ex:
+			self.log_error(ex)
+				
 	def update_ui_bottom(self, current_data):
 		"""
 		Update one-fourths of the screen with persistent information about the current print
