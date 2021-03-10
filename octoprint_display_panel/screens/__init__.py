@@ -12,7 +12,7 @@ implementing screens, see base.py.
 """
 from octoprint.events import Events
 
-from . import base, system, printer
+from . import base, system, printer, soft_buttons
 
 
 class MessageScreen(base.MicroPanelScreenBase):
@@ -64,6 +64,8 @@ class MicroPanelScreenTop(base.MicroPanelScreenBase):
                                                  self._printer),
             'print': printer.PrintStatusScreen(width, self.subscreen_height,
                                                self._printer),
+            'softbuttons': soft_buttons.SoftButtonsScreen(
+                width, self.subscreen_height, self._printer, self._settings),
         }
         self.current_screen = 'system'
         self.set_subscreen(self.current_screen)
