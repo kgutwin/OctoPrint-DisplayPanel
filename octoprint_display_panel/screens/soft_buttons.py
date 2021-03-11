@@ -1,4 +1,4 @@
-
+import os.path
 from octoprint.events import Events
 
 from . import base
@@ -22,6 +22,9 @@ class SoftButtonsScreen(base.MicroPanelScreenScroll):
         self._settings = _settings
         
     def handle_menu_item(self, menu_item):
+        if self._printer.is_disconnected():
+            return
+        
         if menu_item == 'Auto Home':
             self._printer.commands('G28')
         elif menu_item == 'Bed Leveling':
@@ -39,14 +42,16 @@ class SoftButtonsScreen(base.MicroPanelScreenScroll):
             self._printer.commands('M702 U10')
         elif menu_item == 'Cooldown':
             self._printer.commands(['M104 S0', 'M140 S0'])
+        return {'DRAW'}
 
 
 class FileSelectScreen(base.MicroPanelScreenScroll):
     _logger = getLogger('octoprint.plugins.display_panel.file_select')
     
-    def __init__(self, width, height, _file_manager):
+    def __init__(self, width, height, _printer, _file_manager):
+        self._printer = _printer
         self._file_manager = _file_manager
-        self.folder = None
+        self.folder = ""
         super().__init__(width, height, 'File Select', [])
         self.refresh_menu()
         
@@ -54,6 +59,8 @@ class FileSelectScreen(base.MicroPanelScreenScroll):
         m = {}
         files = self._file_manager.list_files(destinations='local',
                                               path=self.folder)['local']
+        if self.folder:
+            m['../'] = 9e999
         for name, metadata in files.items():
             self._logger.info(f'{name}: {repr(metadata)}')
             if 'type' not in metadata:
@@ -83,3 +90,18 @@ class FileSelectScreen(base.MicroPanelScreenScroll):
     def handle_event(self, event, payload):
         self.refresh_menu()
 
+    def handle_menu_item(self, menu_item):
+        if menu_item.endswith('/'):
+            self.folder = os.path.normpath(
+                os.path.join(self.folder, menu_item.rstrip('/')))
+            if self.folder == '.':
+                self.folder = ''
+            self.refresh_menu()
+            return {'DRAW'}
+
+        if self._printer.is_disconnected():
+            return
+
+        self._printer.select_file(menu_item, False, printAfterSelect=False)
+        return {'DRAW'}
+        

@@ -68,7 +68,8 @@ class MicroPanelScreenTop(base.MicroPanelScreenBase):
             'softbuttons': soft_buttons.SoftButtonsScreen(
                 width, self.subscreen_height, self._printer, self._settings),
             'fileselect': soft_buttons.FileSelectScreen(
-                width, self.subscreen_height, self._file_manager),
+                width, self.subscreen_height, self._printer,
+                self._file_manager),
         }
         self.current_screen = 'system'
         self.set_subscreen(self.current_screen)
