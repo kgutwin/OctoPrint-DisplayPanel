@@ -363,3 +363,8 @@ class MicroPanelScreenScroll(MicroPanelScreenBase):
                     self.bottom_index = None
             return {'DRAW'}
             
+        elif label == 'play':
+            return self.handle_menu_item(self.menu[self.selection])
+
+    def handle_menu_item(self, menu_item):
+        pass
