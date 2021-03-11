@@ -151,6 +151,7 @@ class Display_panelPlugin(octoprint.plugin.StartupPlugin,
 			pin_play		= -1,			# Default is disabled
 			progress_on_top	= False,		# Default is disabled
 			timebased_progress	= False,	# Default is disabled
+			soft_buttons = [],
 		)
 
 	def on_settings_save(self, data):

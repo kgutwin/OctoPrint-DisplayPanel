@@ -10,40 +10,37 @@ class SoftButtonsScreen(base.MicroPanelScreenScroll):
     _logger = getLogger('octoprint.plugins.display_panel.soft_buttons')
     
     def __init__(self, width, height, _printer, _settings):
-        menu = [
-            'Auto Home',
-            'Bed Leveling',
-            'Filament Unload',
-            'Filament Load',
-            'Cooldown'
-        ]
-        super().__init__(width, height, 'Soft Buttons', menu)
+        super().__init__(width, height, 'Soft Buttons', [],
+                         empty_text="None - add in settings")
         self._printer = _printer
         self._settings = _settings
+        self.refresh_menu()
+
+    def refresh_menu(self):
+        self.menu = [
+            i['label'] for i in self._settings.get(['soft_buttons'],
+                                                   merged=True)
+        ]
         
     def handle_menu_item(self, menu_item):
         if self._printer.is_disconnected():
             return
-        
-        if menu_item == 'Auto Home':
-            self._printer.commands('G28')
-        elif menu_item == 'Bed Leveling':
-            self._printer.commands([
-                'M140 S50', 'G28', 'M190',
-                'G0 X30 Y30 Z1', 'G0 Z0', 'M0 Point 1',
-                'G0 X30 Y200 Z1', 'G0 Z0', 'M0 Point 2',
-                'G0 X200 Y200 Z1', 'G0 Z0', 'M0 Point 3',
-                'G0 X200 Y30 Z1', 'G0 Z0', 'M0 Point 4',
-                'G28'
-            ])
-        elif menu_item == 'Filament Load':
-            self._printer.commands('M701 L10')
-        elif menu_item == 'Filament Unload':
-            self._printer.commands('M702 U10')
-        elif menu_item == 'Cooldown':
-            self._printer.commands(['M104 S0', 'M140 S0'])
+
+        for i in self._settings.get(['soft_buttons'], merged=True):
+            if menu_item == i['label']:
+                commands = [
+                    c.strip() for c in i['gcode'].split(';')
+                ]
+                self._printer.commands(commands)
+                
         return {'DRAW'}
 
+    EVENTS = [Events.SETTINGS_UPDATED]
+
+    def handle_event(self, event, payload):
+        self.refresh_menu()
+        return {'DRAW'}
+    
 
 class FileSelectScreen(base.MicroPanelScreenScroll):
     _logger = getLogger('octoprint.plugins.display_panel.file_select')
