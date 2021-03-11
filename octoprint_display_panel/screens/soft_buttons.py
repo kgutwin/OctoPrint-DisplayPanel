@@ -37,6 +37,10 @@ class FileSelectScreen(base.MicroPanelScreenScroll):
             self._logger.info(f'{name}: {repr(metadata)}')
             if 'type' not in metadata:
                 continue
+            # skip files which have completed successfully
+            if 'history' in metadata and any(h.get('success')
+                                             for h in metadata['history']):
+                continue
             if metadata['type'] == 'folder':
                 m[name + '/'] = 9e999
             elif metadata['type'] == 'machinecode':
