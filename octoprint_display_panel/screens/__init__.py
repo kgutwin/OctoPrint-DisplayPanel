@@ -41,9 +41,10 @@ class MicroPanelScreenTop(base.MicroPanelScreenBase):
     will not need this level of complexity.
 
     """
-    def __init__(self, width, height, _printer, _settings):
+    def __init__(self, width, height, _printer, _settings, _file_manager):
         self._printer = printer.PrinterHelper(_printer)
         self._settings = _settings
+        self._file_manager = _file_manager
 
         # Define the status bar screen, which is typically displayed.
         self.status_bar_height = 16
@@ -66,6 +67,8 @@ class MicroPanelScreenTop(base.MicroPanelScreenBase):
                                                self._printer),
             'softbuttons': soft_buttons.SoftButtonsScreen(
                 width, self.subscreen_height, self._printer, self._settings),
+            'fileselect': soft_buttons.FileSelectScreen(
+                width, self.subscreen_height, self._file_manager),
         }
         self.current_screen = 'system'
         self.set_subscreen(self.current_screen)

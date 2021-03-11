@@ -301,7 +301,10 @@ class MicroPanelScreenScroll(MicroPanelScreenBase):
     def draw(self):
         c = self.get_canvas()
 
-        if self.bottom_index is not None:
+        if not self.menu:
+            c.text((8, 12), self.empty_text)
+            
+        elif self.bottom_index is not None:
             # render bottom-to-top
             bottom = self.height
             for i in range(self.bottom_index, max(-1, self.bottom_index-4), -1):
